@@ -6,11 +6,13 @@ const StudentView = () => {
   const [isDistracted, setIsDistracted] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [timeDistracted, setTimeDistracted] = useState(0);
+  const [sessionId, setSessionId] = useState(null);
 
   const distractionInterval = useRef(null);
   const quizTimeout = useRef(null);
   const popQuizTimeout = useRef(null);
   const distractionTimer = useRef(null);
+  const heartbeatInterval = useRef(null);
 
   // Tab Tracking & Distraction Timer
   useEffect(() => {
@@ -38,6 +40,55 @@ const StudentView = () => {
       clearInterval(distractionTimer.current);
     };
   }, []);
+
+  // Initialize Session ID
+  useEffect(() => {
+    const generateSessionId = () => {
+      let id = localStorage.getItem('ghostStudentSessionId');
+      if (!id) {
+        id = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('ghostStudentSessionId', id);
+      }
+      setSessionId(id);
+    };
+
+    generateSessionId();
+  }, []);
+
+  // Heartbeat: Send score and presence status every 5 seconds
+  useEffect(() => {
+    if (!sessionId) return;
+
+    const sendHeartbeat = async () => {
+      try {
+        const payload = {
+          sessionId: sessionId,
+          score: focusScore,
+          isPresent: !document.hidden,
+        };
+
+        const response = await fetch('http://localhost:5000/api/session/heartbeat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          console.error('Heartbeat failed:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error sending heartbeat:', error);
+      }
+    };
+
+    heartbeatInterval.current = setInterval(sendHeartbeat, 5000);
+
+    return () => {
+      clearInterval(heartbeatInterval.current);
+    };
+  }, [sessionId, focusScore]);
 
   // Pop Quiz Logic
   useEffect(() => {
@@ -85,8 +136,8 @@ const StudentView = () => {
 
   const FocusRing = ({ score }) => {
     return (
-      <div>
-        <p className="score-text" style={{ color: getScoreColor(score) }}>{score}</p>
+      <div style={{ textAlign: 'center' }}>
+        <p className="score-text" style={{ color: getScoreColor(score), textAlign: 'center' }}>{score}</p>
       </div>
     );
   };
@@ -97,13 +148,13 @@ const StudentView = () => {
       {/* Main Content */}
       <main className="main-content">
         <header className="centered-header">
-          <h1>GhostStudent</h1>
-          <p>dont lose track</p>
+          <h1 style={{ color: 'white', textAlign: 'center' }}>GhostStudent</h1>
+          <p style={{ color: 'white', textAlign: 'center' }}>dont lose track</p>
         </header>
         
         <div className="video-feed">
           <div className="video-placeholder">
-             <p>Video Feed Offline</p>
+             <p style={{ color: 'white', textAlign: 'center' }}>Video Feed Offline</p>
           </div>
         </div>
         <div className="controls">
@@ -117,22 +168,22 @@ const StudentView = () => {
 
       {/* Sidebar */}
       <aside className="right-sidebar">
-        <h2>Dashboard</h2>
+        <h2 style={{ color: 'white', textAlign: 'center' }}>Dashboard</h2>
         <div className="focus-section">
-          <h3>Focus Score</h3>
+          <h3 style={{ color: 'white', textAlign: 'center' }}>Focus Score</h3>
           <FocusRing score={focusScore} />
-          {isDistracted && <p className="distracted-warning">You seem distracted!</p>}
+          {isDistracted && <p className="distracted-warning" style={{ color: 'white', textAlign: 'center' }}>You seem distracted!</p>}
         </div>
         <div className="stats-section">
             <div className="stat-row">
-                <span>Status:</span>
-                <span className={isDistracted ? 'status-distracted' : 'status-focused'}>
+                <span style={{ color: 'white' }}>Status:</span>
+                <span className={isDistracted ? 'status-distracted' : 'status-focused'} style={{ color: 'white' }}>
                     {isDistracted ? 'Distracted' : 'Focused'}
                 </span>
             </div>
             <div className="stat-row">
-                <span>Time Distracted:</span>
-                <span>{formatTime(timeDistracted)}</span>
+                <span style={{ color: 'white' }}>Time Distracted:</span>
+                <span style={{ color: 'white' }}>{formatTime(timeDistracted)}</span>
             </div>
         </div>
       </aside>
@@ -141,8 +192,8 @@ const StudentView = () => {
       {showQuiz && (
         <div className="quiz-modal">
           <div className="quiz-content">
-            <h2>Pop Quiz!</h2>
-            <p>Click the button to prove you're paying attention!</p>
+            <h2 style={{ color: 'white', textAlign: 'center' }}>Pop Quiz!</h2>
+            <p style={{ color: 'white', textAlign: 'center' }}>Click the button to prove you're paying attention!</p>
             <button onClick={handleQuizClick} className="quiz-btn">🎯</button>
           </div>
         </div>
