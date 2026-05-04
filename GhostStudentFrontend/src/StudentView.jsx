@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FiVideo, FiMic, FiShare, FiMessageSquare, FiXCircle } from 'react-icons/fi';
 
-
 const StudentView = () => {
   const [focusScore, setFocusScore] = useState(100);
   const [isDistracted, setIsDistracted] = useState(false);
@@ -73,9 +72,9 @@ const StudentView = () => {
   };
 
   const getScoreColor = (score) => {
-    if (score > 80) return 'text-green-400';
-    if (score < 50) return 'text-red-500';
-    return 'text-yellow-400';
+    if (score > 80) return '#4ade80'; // green-400
+    if (score < 50) return '#ef4444'; // red-500
+    return '#facc15'; // yellow-400
   };
 
   const formatTime = (seconds) => {
@@ -85,103 +84,66 @@ const StudentView = () => {
   };
 
   const FocusRing = ({ score }) => {
-    const radius = 80;
-    const stroke = 10;
-    const normalizedRadius = radius - stroke * 2;
-    const circumference = normalizedRadius * 2 * Math.PI;
-    const strokeDashoffset = circumference - (score / 100) * circumference;
-
     return (
-      <div className="relative flex items-center justify-center">
-        <svg
-          height={radius * 2}
-          width={radius * 2}
-          className="-rotate-90 transform"
-        >
-          <circle
-            stroke="#374151"
-            fill="transparent"
-            strokeWidth={stroke}
-            r={normalizedRadius}
-            cx={radius}
-            cy={radius}
-          />
-          <circle
-            stroke={getScoreColor(score).replace('text-', '').replace('-400', '').replace('-500', '')}
-            fill="transparent"
-            strokeWidth={stroke}
-            strokeDasharray={circumference + ' ' + circumference}
-            style={{ strokeDashoffset }}
-            strokeLinecap="round"
-            r={normalizedRadius}
-            cx={radius}
-            cy={radius}
-            className={`transition-all duration-300 ease-in-out`}
-          />
-        </svg>
-        <p className={`absolute text-5xl font-bold ${getScoreColor(score)}`}>{score}</p>
+      <div>
+        <p className="score-text" style={{ color: getScoreColor(score) }}>{score}</p>
       </div>
     );
   };
 
 
   return (
-    <div className="flex h-screen bg-gray-900 text-gray-200 font-sans">
+    <div className="student-view-container">
       {/* Main Content */}
-      <main className="flex-1 flex flex-col p-8">
-        <header className="mb-2 text-center">
-          <h1 className="text-3xl font-bold text-white mb-0">GhostStudent</h1>
-          <p className="text-gray-400 -mt-1">dont lose track</p>
+      <main className="main-content">
+        <header className="centered-header">
+          <h1>GhostStudent</h1>
+          <p>dont lose track</p>
         </header>
         
-        <div className="flex-1 bg-black/50 rounded-lg overflow-hidden relative shadow-2xl border-2 border-gray-700 backdrop-blur-sm">
-          <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center">
-             <p className="text-gray-400 text-2xl">Video Feed Offline</p>
+        <div className="video-feed">
+          <div className="video-placeholder">
+             <p>Video Feed Offline</p>
           </div>
         </div>
-        <div className="flex items-center justify-center space-x-4 mt-4">
-            <button className="p-3 bg-red-500 rounded-full text-white hover:bg-red-600 transition-colors"><FiMic size={20} /></button>
-            <button className="p-3 bg-gray-700 rounded-full text-white hover:bg-gray-600 transition-colors"><FiVideo size={20} /></button>
-            <button className="p-3 bg-gray-700 rounded-full text-white hover:bg-gray-600 transition-colors"><FiShare size={20} /></button>
-            <button className="p-3 bg-gray-700 rounded-full text-white hover:bg-gray-600 transition-colors"><FiMessageSquare size={20} /></button>
-            <button className="p-4 bg-red-600 rounded-full text-white hover:bg-red-700 transition-colors"><FiXCircle size={24} /></button>
+        <div className="controls">
+            <button className="control-btn red"><FiMic size={20} /></button>
+            <button className="control-btn"><FiVideo size={20} /></button>
+            <button className="control-btn"><FiShare size={20} /></button>
+            <button className="control-btn"><FiMessageSquare size={20} /></button>
+            <button className="control-btn end-call"><FiXCircle size={24} /></button>
         </div>
       </main>
 
       {/* Sidebar */}
-      <aside className="w-80 bg-gray-800/50 p-6 flex flex-col shadow-lg">
-        <h2 className="text-2xl font-bold mb-6 text-white border-b border-gray-700 pb-2">Dashboard</h2>
-        <div className="flex flex-col items-center space-y-6">
-          <h3 className="text-lg font-semibold text-gray-300">Focus Score</h3>
+      <aside className="right-sidebar">
+        <h2>Dashboard</h2>
+        <div className="focus-section">
+          <h3>Focus Score</h3>
           <FocusRing score={focusScore} />
-          {isDistracted && <p className="text-yellow-400 animate-pulse mt-2">You seem distracted!</p>}
+          {isDistracted && <p className="distracted-warning">You seem distracted!</p>}
         </div>
-        <div className="mt-8 pt-6 border-t border-gray-700 text-sm space-y-4">
-            <div className="flex justify-between">
-                <span className="text-gray-400">Status:</span>
-                <span className={`font-bold ${isDistracted ? 'text-yellow-400' : 'text-green-400'}`}>
+        <div className="stats-section">
+            <div className="stat-row">
+                <span>Status:</span>
+                <span className={isDistracted ? 'status-distracted' : 'status-focused'}>
                     {isDistracted ? 'Distracted' : 'Focused'}
                 </span>
             </div>
-            <div className="flex justify-between">
-                <span className="text-gray-400">Time Distracted:</span>
-                <span className="font-bold text-white">{formatTime(timeDistracted)}</span>
+            <div className="stat-row">
+                <span>Time Distracted:</span>
+                <span>{formatTime(timeDistracted)}</span>
             </div>
         </div>
       </aside>
 
       {/* Pop Quiz Modal */}
       {showQuiz && (
-        <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="text-center p-8">
-            <h2 className="text-4xl font-bold text-white mb-4">Pop Quiz!</h2>
-            <p className="text-gray-300 mb-6">Click the button to prove you're paying attention!</p>
-            <button 
-              onClick={handleQuizClick}
-              className="text-6xl animate-bounce p-6 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-full shadow-lg transform hover:scale-110 transition-transform"
-            >
-              🎯
-            </button>
+        <div className="quiz-modal">
+          <div className="quiz-content">
+            <h2>Pop Quiz!</h2>
+            <p>Click the button to prove you're paying attention!</p>
+            <button onClick={handleQuizClick} className="quiz-btn">🎯</button>
           </div>
         </div>
       )}
