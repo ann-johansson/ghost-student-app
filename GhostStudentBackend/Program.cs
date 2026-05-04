@@ -13,6 +13,17 @@ namespace GhostStudentBackend
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
 
+            // Add CORS policy to allow requests from the React app
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowReactApp", builder =>
+                {
+                    builder.WithOrigins("http://localhost:5173") // React development server URL
+                           .AllowAnyHeader()
+                           .AllowAnyMethod();
+                });
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -25,6 +36,7 @@ namespace GhostStudentBackend
 
             app.UseAuthorization();
 
+            app.UseCors("AllowReactApp"); // Apply the CORS policy
 
             app.MapControllers();
 
