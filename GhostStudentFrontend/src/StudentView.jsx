@@ -1,14 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { FiVideo, FiMic, FiShare, FiMessageSquare, FiXCircle } from 'react-icons/fi';
 
 const StudentView = () => {
   const [focusScore, setFocusScore] = useState(100);
   const [isDistracted, setIsDistracted] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [timeDistracted, setTimeDistracted] = useState(0);
+
   const distractionInterval = useRef(null);
   const quizTimeout = useRef(null);
   const popQuizTimeout = useRef(null);
+  const distractionTimer = useRef(null);
 
-  // Tab Tracking Logic
+  // Tab Tracking & Distraction Timer
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -16,9 +20,13 @@ const StudentView = () => {
         distractionInterval.current = setInterval(() => {
           setFocusScore(prevScore => Math.max(0, prevScore - 1));
         }, 1000);
+        distractionTimer.current = setInterval(() => {
+          setTimeDistracted(prevTime => prevTime + 1);
+        }, 1000);
       } else {
         setIsDistracted(false);
         clearInterval(distractionInterval.current);
+        clearInterval(distractionTimer.current);
       }
     };
 
@@ -27,19 +35,20 @@ const StudentView = () => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(distractionInterval.current);
+      clearInterval(distractionTimer.current);
     };
   }, []);
 
   // Pop Quiz Logic
   useEffect(() => {
     const schedulePopQuiz = () => {
-      const randomInterval = Math.random() * (15 * 60 * 1000 - 10 * 60 * 1000) + 10 * 60 * 1000; // 10-15 minutes
+      const randomInterval = Math.random() * (15 * 60 * 1000 - 10 * 60 * 1000) + 10 * 60 * 1000; // 10-15 min
       
       quizTimeout.current = setTimeout(() => {
         setShowQuiz(true);
         popQuizTimeout.current = setTimeout(() => {
           handleQuizMiss();
-        }, 5000); // 5 seconds to click
+        }, 8000); // 8 seconds to click
       }, randomInterval);
     };
 
@@ -49,13 +58,12 @@ const StudentView = () => {
       clearTimeout(quizTimeout.current);
       clearTimeout(popQuizTimeout.current);
     };
-  }, [focusScore]); // Reschedule if score changes, to keep it dynamic
+  }, []); 
 
   const handleQuizClick = () => {
     clearTimeout(popQuizTimeout.current);
     setShowQuiz(false);
-    // Optional: reward for clicking
-    // setFocusScore(prevScore => Math.min(100, prevScore + 5)); 
+    setFocusScore(prevScore => Math.min(100, prevScore + 10)); 
   };
 
   const handleQuizMiss = () => {
@@ -63,48 +71,80 @@ const StudentView = () => {
     setFocusScore(prevScore => Math.max(0, prevScore - 20));
   };
 
-  const getScoreColor = () => {
-    if (focusScore > 80) return 'text-green-500';
-    if (focusScore < 50) return 'text-red-500';
-    return 'text-white';
+  const getScoreColor = (score) => {
+    if (score > 80) return '#4ade80'; // green-400
+    if (score < 50) return '#ef4444'; // red-500
+    return '#facc15'; // yellow-400
   };
 
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
+
+  const FocusRing = ({ score }) => {
+    return (
+      <div>
+        <p className="score-text" style={{ color: getScoreColor(score) }}>{score}</p>
+      </div>
+    );
+  };
+
+
   return (
-    <div className="flex h-screen bg-gray-900 text-white">
+    <div className="student-view-container">
       {/* Main Content */}
-      <main className="flex-1 p-8">
-        <h1 className="text-3xl font-bold mb-4">FocusCheck Session</h1>
-        <div className="aspect-w-16 aspect-h-9">
-          <iframe
-            className="w-full h-full"
-            src="https://www.youtube.com/embed/placeholder"
-            title="YouTube video player"
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          ></iframe>
+      <main className="main-content">
+        <header className="centered-header">
+          <h1>GhostStudent</h1>
+          <p>dont lose track</p>
+        </header>
+        
+        <div className="video-feed">
+          <div className="video-placeholder">
+             <p>Video Feed Offline</p>
+          </div>
+        </div>
+        <div className="controls">
+            <button className="control-btn red"><FiMic size={20} /></button>
+            <button className="control-btn"><FiVideo size={20} /></button>
+            <button className="control-btn"><FiShare size={20} /></button>
+            <button className="control-btn"><FiMessageSquare size={20} /></button>
+            <button className="control-btn end-call"><FiXCircle size={24} /></button>
         </div>
       </main>
 
       {/* Sidebar */}
-      <aside className="w-64 bg-gray-800 p-6">
-        <h2 className="text-2xl font-bold mb-6">Dashboard</h2>
-        <div className="text-center">
-          <h3 className="text-lg font-semibold mb-2">Focus Score</h3>
-          <p className={`text-7xl font-bold ${getScoreColor()}`}>{focusScore}</p>
-          {isDistracted && <p className="text-yellow-400 mt-2">You are distracted!</p>}
+      <aside className="right-sidebar">
+        <h2>Dashboard</h2>
+        <div className="focus-section">
+          <h3>Focus Score</h3>
+          <FocusRing score={focusScore} />
+          {isDistracted && <p className="distracted-warning">You seem distracted!</p>}
+        </div>
+        <div className="stats-section">
+            <div className="stat-row">
+                <span>Status:</span>
+                <span className={isDistracted ? 'status-distracted' : 'status-focused'}>
+                    {isDistracted ? 'Distracted' : 'Focused'}
+                </span>
+            </div>
+            <div className="stat-row">
+                <span>Time Distracted:</span>
+                <span>{formatTime(timeDistracted)}</span>
+            </div>
         </div>
       </aside>
 
       {/* Pop Quiz Modal */}
       {showQuiz && (
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <button 
-            onClick={handleQuizClick}
-            className="text-8xl animate-bounce p-8 bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 rounded-full"
-          >
-            🎉
-          </button>
+        <div className="quiz-modal">
+          <div className="quiz-content">
+            <h2>Pop Quiz!</h2>
+            <p>Click the button to prove you're paying attention!</p>
+            <button onClick={handleQuizClick} className="quiz-btn">🎯</button>
+          </div>
         </div>
       )}
     </div>
@@ -112,3 +152,4 @@ const StudentView = () => {
 };
 
 export default StudentView;
+

@@ -1,3 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+body {
+  background-color: #111827; /* gray-900 */
+  font-family: 'Nunito', sans-serif;
+  margin: 0;
+}
+
