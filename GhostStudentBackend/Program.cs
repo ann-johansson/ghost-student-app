@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using GhostStudentBackend.Data;
+
 namespace GhostStudentBackend
 {
     public class Program
@@ -27,6 +30,10 @@ namespace GhostStudentBackend
             // Add Swagger services
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            // Register the DbContext with the dependency injection container
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             var app = builder.Build();
 
