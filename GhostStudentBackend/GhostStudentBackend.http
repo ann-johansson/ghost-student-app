@@ -1,0 +1,6 @@
+@GhostStudentBackend_HostAddress = http://localhost:5126
+
+GET {{GhostStudentBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
